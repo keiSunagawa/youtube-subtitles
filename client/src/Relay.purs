@@ -27,10 +27,10 @@ newtype RelayPOSTParameters a = RelayPOSTParameters
                               , body :: a
                               }
 
-bodyEncode :: RelayBody -> String
+-- bodyEncode :: RelayBody -> String
 bodyEncode body = case body of
   Form { body: body' } ->
-    writeJSON { tpe: "form", body: body' }
+    { tpe: "form", body: body' }
 
 postParamEncode :: RelayURL -> RelayCookies -> RelayHeaders -> RelayBody -> String
 postParamEncode url (RelayCookies cookie) (RelayHeaders headers) body =
@@ -39,6 +39,9 @@ postParamEncode url (RelayCookies cookie) (RelayHeaders headers) body =
             , cookie: cookie
             , body: bodyEncode(body)
             }
+
+getParamEncode url =
+  writeJSON { url: url }
 -- TODO try catch
 postRelay :: RelayURL -> RelayCookies -> RelayHeaders -> RelayBody -> Aff Unit
 postRelay url cookie header body = do
@@ -52,3 +55,12 @@ postRelay url cookie header body = do
     Left err -> log $ "GET /api response failed to decode: " <> AX.printResponseFormatError err
     Right json -> log $ "GET /api response: " <> J.stringify json
 
+-- TODO try catch
+-- getRelay :: RelayURL -> Aff Unit
+getRelay url = do
+  let req = AX.defaultRequest { url = "http://localhost:8080/relay/get"
+                              , method = Left POST
+                              , content = Just (string (getParamEncode url))
+                              , responseFormat = ResponseFormat.string
+                              }
+  AX.request req

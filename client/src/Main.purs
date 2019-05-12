@@ -3,10 +3,17 @@ module Main where
 import Prelude
 
 import Effect (Effect)
-import Effect.Console (log)
-import Kerfume.Http (postTo)
+import Effect.Aff (launchAff, try)
+import Effect.Class (liftEffect)
+import Effect.Console (logShow)
+import Kerfume.Http (getParameter, postTo, runXHR)
 
 main :: Effect Unit
 main = do
-  a <- postTo
-  log "Hello sailor!"
+  f <- runXHR
+  pure unit
+
+-- main :: Effect Unit
+-- main = do
+--   f <- launchAff $ getParameter >>= (\x -> liftEffect $ logShow x)
+--   pure unit

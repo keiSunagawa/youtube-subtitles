@@ -30,13 +30,14 @@ object RelayserverServer {
       httpApp = (
         RelayserverRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
         RelayserverRoutes.jokeRoutes[F](jokeAlg) <+>
-        RelayserverRoutes.relayGet[F](toYtb) <+>
-        RelayserverRoutes.relayPost[F](toYtb)
+        // RelayserverRoutes.relayGet[F](toYtb) <+>
+          RelayserverRoutes.relayPost[F](toYtb) <+>
+          RelayserverRoutes.relayGet[F](toYtb)
       ).orNotFound
 
       originConfig = CORSConfig(
         anyOrigin = false,
-        allowedOrigins = Set("localhost"),
+        allowedOrigins = Set("http://localhost"),
         allowCredentials = false,
         maxAge = 1.day.toSeconds)
       // With Middlewares in place

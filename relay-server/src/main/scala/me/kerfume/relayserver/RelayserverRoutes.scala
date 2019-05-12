@@ -36,13 +36,14 @@ object RelayserverRoutes {
   }
 
   def relayGet[F[_]: Sync](H: Relay[F]): HttpRoutes[F] = {
+    import Relay._
     val dsl = new Http4sDsl[F]{}
     import dsl._
     HttpRoutes.of[F] {
-      case GET -> Root / "relay" =>
+      case req @ POST -> Root / "relay" / "get" =>
         (for {
-          res <- H.post()
-          resp <- Ok(res)
+          params <- req.decodeJson[GETParameters]
+          resp <- H.get(params.url) >>= (Ok(_))
         } yield resp).handleErrorWith { e =>
           println(e)
           Conflict("client error.")
@@ -50,15 +51,14 @@ object RelayserverRoutes {
     }
   }
   def relayPost[F[_]: Sync](H: Relay[F]): HttpRoutes[F] = {
+    import Relay._
     val dsl = new Http4sDsl[F]{}
     import dsl._
     HttpRoutes.of[F] {
       case req @ POST -> Root / "relay" =>
         (for {
-          resp <- req.decode[Json] { d =>
-            println(d)
-            H.post() >>= (Ok(_))
-          }
+          params <- req.decodeJson[POSTParameters]
+          resp <- H.post(params) >>= (Ok(_))
         } yield resp).handleErrorWith { e =>
           println(e)
           Conflict("client error.")
