@@ -1,17 +1,18 @@
 module Kerfume.Relay where
 
+import Effect.Aff
 import Prelude
 import Simple.JSON
 
 import Affjax as AX
 import Affjax.RequestBody (string)
+import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut.Core as J
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Class.Console (log)
-import Effect.Aff
-import Affjax.ResponseFormat as ResponseFormat
+import Kerfume.FetchParameters (decodeP, dbg)
 
 -- definitions
 type RelayURL = String
@@ -53,7 +54,9 @@ postRelay url cookie header body = do
   res <- AX.request req
   case res.body of
     Left err -> log $ "GET /api response failed to decode: " <> AX.printResponseFormatError err
-    Right json -> log $ "GET /api response: " <> J.stringify json
+    Right json -> log $ "GET /api response: " <> (dbg $ do
+      fr <- parseJSON $ J.stringify json
+      decodeP fr)
 
 -- TODO try catch
 -- getRelay :: RelayURL -> Aff Unit

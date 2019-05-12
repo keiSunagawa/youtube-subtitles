@@ -18,7 +18,7 @@ import Effect.Aff (launchAff, try)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log, logShow)
 
-makeCookie vil ysc = RelayCookies [ {key: "VISITOR_INFO1_LIVE", value: ysc}
+makeCookie vil ysc = RelayCookies [ {key: "VISITOR_INFO1_LIVE", value: vil}
                       , {key: "YSC", value: ysc}]
 headers = RelayHeaders [ {key: "x-youtube-client-version", value: "2.20190509"}
                        , {key: "x-youtube-client-name", value: "1" }]
@@ -29,7 +29,7 @@ url = "https://www.youtube.com/service_ajax?name=getTranscriptEndpoint"
 
 postTo :: RelayCookies -> RelayBody -> Aff Unit
 postTo c b = do
-  delay (Milliseconds 10000.0)
+  -- delay (Milliseconds 10000.0)
   postRelay url c headers b
 
 getParameter :: Aff (Either String {c :: RelayCookies, b :: RelayBody, origin :: String})
@@ -41,13 +41,12 @@ getParameter = do
     Parameters params <- lmap (\e -> "parse failed. " <> show e) (decode str)
     b <- note "aaaaaa!!!" (proc params.body)
     pure $ { b: (makeBody b.trkprm b.sstkn b.csn), c: (makeCookie params.cookie.vil params.cookie.ysc), origin: params.body}
-    -- pure params.body
 
 runXHR :: Effect (Fiber Unit)
 runXHR = launchAff $ do
   p <- getParameter
   case p of
     Right p' -> do
-      pure $ makeIframe p'.origin
+      -- pure $ makeIframe p'.origin
       postTo p'.c p'.b
     Left e -> liftEffect $ logShow e
