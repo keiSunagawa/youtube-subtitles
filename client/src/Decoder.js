@@ -1,6 +1,6 @@
 "use strict";
 
-// module Kerfume.FetchParameters
+// module Kerfume.Decoder
 
 exports.dbg = function (a) {
   console.log(a)
