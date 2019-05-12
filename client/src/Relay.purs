@@ -4,11 +4,11 @@ import Effect.Aff
 import Prelude
 import Simple.JSON
 
-import Data.Bifunctor (lmap)
 import Affjax as AX
 import Affjax.RequestBody (RequestBody(..), string)
 import Affjax.ResponseFormat as ResponseFormat
 import Data.Argonaut.Core as J
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
@@ -28,29 +28,29 @@ newtype RelayPOSTParameters a = RelayPOSTParameters
                               , cookie :: Array RelayKV
                               , body :: a
                               }
+type RelayResponse = (AX.Response (Either AX.ResponseFormatError String))
+
+-- helpers
+getBody :: RelayResponse -> (AX.ResponseFormatError -> String) -> Either String String
+getBody res handle = lmap handle res.body
 
 -- TODO try catch
-postRelay :: RelayURL -> RelayCookies -> RelayHeaders -> RelayBody -> Aff (Either String (Array String))
+postRelay :: RelayURL -> RelayCookies -> RelayHeaders -> RelayBody -> Aff RelayResponse
 postRelay url cookie header body = do
-  let req = AX.defaultRequest { url = "http://localhost:8080/relay"
+  AX.request AX.defaultRequest { url = "http://localhost:8080/relay"
                               , method = Left POST
                               , content = Just (string (postParamEncode url cookie header body))
-                              , responseFormat = ResponseFormat.json
-                              }
-  res <- AX.request req
-  pure case res.body of
-    Left err -> Left $ "GET /api response failed to decode: " <> AX.printResponseFormatError err
-    Right json -> lmap (\x -> "failed decode subtitile") (decodeSubtitle $ J.stringify json)
-
--- TODO try catch
-getRelay :: RelayURL -> Aff (AX.Response (Either AX.ResponseFormatError String))
-getRelay url = do
-  let req = AX.defaultRequest { url = "http://localhost:8080/relay/get"
-                              , method = Left POST
-                              , content = Just (string (getParamEncode url))
                               , responseFormat = ResponseFormat.string
                               }
-  AX.request req
+
+-- TODO try catch
+getRelay :: RelayURL -> RelayCookies -> RelayHeaders -> Aff RelayResponse
+getRelay url cookie headers = do
+  AX.request AX.defaultRequest { url = "http://localhost:8080/relay/get"
+                              , method = Left POST
+                              , content = Just (string (getParamEncode url cookie headers))
+                              , responseFormat = ResponseFormat.string
+                              }
 
 bodyEncode :: RelayBody -> {tpe :: String, body :: Array RelayKV}
 bodyEncode body = case body of
@@ -65,6 +65,9 @@ postParamEncode url (RelayCookies cookie) (RelayHeaders headers) body =
             , body: bodyEncode(body)
             }
 
-getParamEncode :: RelayURL -> String
-getParamEncode url =
-  writeJSON { url: url }
+getParamEncode :: RelayURL -> RelayCookies -> RelayHeaders -> String
+getParamEncode url (RelayCookies cookie) (RelayHeaders headers) =
+  writeJSON { url: url
+            , headers: headers
+            , cookie: cookie
+            }

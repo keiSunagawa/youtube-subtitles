@@ -19,8 +19,6 @@ object RelayserverServer {
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F], C: ContextShift[F]): Stream[F, Nothing] = {
     for {
       client <- BlazeClientBuilder[F](global).stream
-      helloWorldAlg = HelloWorld.impl[F]
-      jokeAlg = Jokes.impl[F](client)
       toYtb = Relay.impl[F](client)
 
       // Combine Service Routes into an HttpApp.
@@ -28,9 +26,6 @@ object RelayserverServer {
       // want to extract a segments not checked
       // in the underlying routes.
       httpApp = (
-        RelayserverRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
-        RelayserverRoutes.jokeRoutes[F](jokeAlg) <+>
-        // RelayserverRoutes.relayGet[F](toYtb) <+>
           RelayserverRoutes.relayPost[F](toYtb) <+>
           RelayserverRoutes.relayGet[F](toYtb)
       ).orNotFound

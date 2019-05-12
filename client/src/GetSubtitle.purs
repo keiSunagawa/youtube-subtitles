@@ -29,19 +29,25 @@ run = launchAff $ do
     Left e -> liftEffect $ logShow e
 
 getSubtitle :: RelayCookies -> RelayBody ->  Aff (Either String (Array String))
-getSubtitle c b = postRelay postUrl c postHeaders b
+getSubtitle c b = do
+  res <- postRelay postUrl c postHeaders b
+  pure $ do
+    str <- getBody res (\e -> "GET /api response failed to decode: " <> AX.printResponseFormatError e)
+    lmap (\x -> "failed decode subtitile") (decodeSubtitle str)
 
 getParameter :: Aff (Either String {c :: RelayCookies, b :: RelayBody, origin :: String})
 getParameter = do
-  res <- try $ getRelay getUrl
+  res <- try $ getRelay getUrl getCookie getHeaders
   pure do
     res' <- lmap (\e -> "GET phase failed. " <> show e) res
-    str <- lmap (\e -> "GET /api response failed to decode: " <> AX.printResponseFormatError e) res'.body
+    str <- getBody res' (\e -> "GET /api response failed to decode: " <> AX.printResponseFormatError e)
     Parameters params <- lmap (\e -> "parse failed. " <> show e) (decodeParams str)
-    b <- note "aaaaaa!!!" (parsePostFormParams params.body)
+    b <- parsePostFormParams params.body
     pure $ { b: (postForm b.trkprm b.sstkn b.csn), c: (postCookie params.cookie.vil params.cookie.ysc), origin: params.body}
 
 -- get parameters
+getCookie = RelayCookies []
+getHeaders = RelayHeaders [ {key: "user-agent", value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36"} ]
 getUrl = "https://www.youtube.com/watch?v=mLJYODobz44&t=1s"
 
 -- post parameters
