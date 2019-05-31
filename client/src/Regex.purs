@@ -13,15 +13,19 @@ import Data.Either (Either, note)
 import Data.String.Regex as R
 import Data.String.Regex.Flags (noFlags)
 
-parsePostFormParams :: String -> Either String { sstkn :: String, trkprm :: String, csn :: String }
+parsePostFormParams :: String -> Either String { sstkn :: String, trkprm :: String, prm :: String, csn :: String }
 parsePostFormParams s = do
            tr <- getTrkprm s
+           prm <- getPrm s
            ss <- getSstkn s
            csn <- getCsn s
-           pure { sstkn: ss, trkprm: tr, csn: csn }
+           pure { sstkn: ss, trkprm: tr, prm: prm, csn: csn }
 
 trkprmR = "SUBTITLES\".,\"serviceEndpoint\":.\"clickTrackingParams\":\"([a-zA-Z0-9=_-]*)\""
 getTrkprm s = matchLast s trkprmR
+
+prmR = "getTranscriptEndpoint\":.\"params\":\"([a-zA-Z0-9=%_-]*)\""
+getPrm s = matchLast s prmR
 
 sstknR = "XSRF_TOKEN\":\"([a-zA-Z0-9=_-]*)\""
 getSstkn s = matchLast s sstknR

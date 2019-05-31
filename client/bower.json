@@ -15,7 +15,8 @@
     "purescript-simple-json": "^5.1.0",
     "purescript-foreign": "^5.0.0",
     "purescript-foreign-generic": "^9.0.0",
-    "purescript-lenient-html-parser": "^4.0.0"
+    "purescript-lenient-html-parser": "^4.0.0",
+    "purescript-pux": "^13.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0"
